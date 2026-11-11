@@ -3,29 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fire & Water - Mode Api / Main Game</title>
+    <title>Fire & Water - Main Game</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
-        body { margin: 0; padding: 0; background: #0a0a12; font-family: sans-serif; overflow: hidden; }
-        .header-nav { display: flex; justify-content: space-between; align-items: center; background: #161625; padding: 6px 12px; height: 40px; color: #fff; font-size: 13px; border-bottom: 1px solid #333; }
+        body { margin: 0; padding: 0; background: #0a0a12; font-family: sans-serif; overflow: hidden; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        .header-nav { display: flex; justify-content: space-between; align-items: center; background: #161625; padding: 6px 12px; height: 36px; color: #fff; font-size: 13px; border-bottom: 1px solid #333; flex-shrink: 0; }
         .header-nav a { color: #4da6ff; text-decoration: none; font-weight: bold; }
-        #game-container { position: relative; width: 100vw; height: calc(100vh - 40px); display: flex; justify-content: center; align-items: center; }
-        canvas { background: #181824; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
         
-        /* Layout Tombol Touch Screen Multi-touch */
-        .controls-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: space-between; padding: 20px; }
-        .pad { pointer-events: auto; display: flex; flex-direction: column; gap: 10px; align-items: center; width: 160px; }
-        .row { display: flex; gap: 15px; }
-        .btn { width: 55px; height: 55px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); display: flex; justify-content: center; align-items: center; font-size: 22px; font-weight: bold; color: white; background: rgba(0,0,0,0.4); }
-        .btn:active { transform: scale(0.92); background: rgba(255,255,255,0.3); }
-        
-        /* Warna Tombol Kiri (Api) & Kanan (Air) */
-        .pad-fire .btn { background: rgba(231, 76, 60, 0.4); border-color: #ff6b6b; }
-        .pad-water .btn { background: rgba(52, 152, 219, 0.4); border-color: #74b9ff; }
-        .pad-fire .btn:active { background: rgba(231, 76, 60, 0.8); }
-        .pad-water .btn:active { background: rgba(52, 152, 219, 0.8); }
+        #game-wrapper { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #12121c; overflow: hidden; }
+        canvas { background: #181824; display: block; box-shadow: 0 0 15px rgba(0,0,0,0.9); }
 
-        .tag { position: absolute; bottom: 5px; font-size: 12px; font-weight: bold; color: #fff; text-shadow: 0 0 4px #000; }
+        /* Panel Kontrol di Bawah Layar - Kiri (Api) & Kanan (Air) */
+        .controls-bottom {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .pad-group {
+            pointer-events: auto;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .btn-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ctrl-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .ctrl-btn.active, .ctrl-btn:active {
+            transform: scale(0.92);
+        }
+        /* Warna Tombol */
+        .fire-ctrl .ctrl-btn { background: rgba(231, 76, 60, 0.6); border-color: #ff6b6b; }
+        .fire-ctrl .ctrl-btn.active { background: rgba(231, 76, 60, 0.9); }
+        
+        .water-ctrl .ctrl-btn { background: rgba(52, 152, 219, 0.6); border-color: #74b9ff; }
+        .water-ctrl .ctrl-btn.active { background: rgba(52, 152, 219, 0.9); }
+
+        .tag-player { font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 0 3px #000; text-align: center; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -35,33 +69,46 @@
             <span id="level-display" style="color:#f39c12; font-weight:bold;">LEVEL 1</span>
         </div>
         <div>
-            <a href="api.html" style="color:#ff6b6b; margin-right:10px;">Mode Api</a>
-            <a href="air.html" style="color:#74b9ff;">Mode Air</a>
+            <span style="color:#ff6b6b; margin-right:15px;">P1 (Api): Kiri Bawah</span>
+            <span style="color:#74b9ff;">P2 (Air): Kanan Bawah</span>
         </div>
     </div>
 
-    <div id="game-container">
-        <canvas id="canvas"></canvas>
+    <div id="game-wrapper">
+        <canvas id="canvas" width="800" height="420"></canvas>
         
-        <div class="controls-layer">
-            <!-- Tombol Kiri (Karakter Api) -->
-            <div class="pad pad-fire">
-                <div class="btn" id="f-up">▲</div>
-                <div class="row">
-                    <div class="btn" id="f-left">◀</div>
-                    <div class="btn" id="f-right">▶</div>
+        <!-- Tombol Kontrol di Bawah Layar -->
+        <div class="controls-bottom">
+            <!-- Kontrol Kiri: Pemain 1 (Api) -->
+            <div class="pad-group fire-ctrl">
+                <div>
+                    <div class="ctrl-btn" id="f-left">◀</div>
+                    <div class="tag-player">KIRI</div>
                 </div>
-                <div class="tag">PEMAIN 1 (API)</div>
+                <div>
+                    <div class="ctrl-btn" id="f-right">▶</div>
+                    <div class="tag-player">KANAN</div>
+                </div>
+                <div>
+                    <div class="ctrl-btn" id="f-up">▲</div>
+                    <div class="tag-player">JUMP</div>
+                </div>
             </div>
 
-            <!-- Tombol Kanan (Karakter Air) -->
-            <div class="pad pad-water">
-                <div class="btn" id="w-up">▲</div>
-                <div class="row">
-                    <div class="btn" id="w-left">◀</div>
-                    <div class="btn" id="w-right">▶</div>
+            <!-- Kontrol Kanan: Pemain 2 (Air) -->
+            <div class="pad-group water-ctrl">
+                <div>
+                    <div class="ctrl-btn" id="w-up">▲</div>
+                    <div class="tag-player">JUMP</div>
                 </div>
-                <div class="tag">PEMAIN 2 (AIR)</div>
+                <div>
+                    <div class="ctrl-btn" id="w-left">◀</div>
+                    <div class="tag-player">KIRI</div>
+                </div>
+                <div>
+                    <div class="ctrl-btn" id="w-right">▶</div>
+                    <div class="tag-player">KANAN</div>
+                </div>
             </div>
         </div>
     </div>
@@ -69,70 +116,117 @@
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const W = 800, H = 500;
-        canvas.width = W; canvas.height = H;
+        const W = 800, H = 420;
 
-        // Ambil parameter level dari URL
         const urlParams = new URLSearchParams(window.location.search);
         let currentLevel = parseInt(urlParams.get('level')) || 1;
         document.getElementById('level-display').innerText = `LEVEL ${currentLevel}`;
 
-        // Sistem Input Keyboard & Touch
-        const keys = {};
-        window.addEventListener('keydown', e => keys[e.code] = true);
-        window.addEventListener('keyup', e => keys[e.code] = false);
+        // Sistem Input Multi-Touch & Keyboard
+        const keys = { 'ArrowLeft': false, 'ArrowRight': false, 'ArrowUp': false, 'KeyA': false, 'KeyD': false, 'KeyW': false };
 
-        function bindTouch(id, code) {
-            const el = document.getElementById(id);
-            el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[code] = true; }, {passive:false});
-            el.addEventListener('touchend', (e) => { e.preventDefault(); keys[code] = false; }, {passive:false});
-            el.addEventListener('mousedown', () => keys[code] = true);
-            el.addEventListener('mouseup', () => keys[code] = false);
+        window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+        window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+        // Pengaturan Multi-Touch agar jari tidak bentrok
+        function setupTouchButton(elemId, keyCode) {
+            const el = document.getElementById(elemId);
+            let activeTouchId = null;
+
+            el.addEventListener('touchstart', e => {
+                e.preventDefault();
+                for (let touch of e.changedTouches) {
+                    if (activeTouchId === null) {
+                        activeTouchId = touch.identifier;
+                        keys[keyCode] = true;
+                        el.classList.add('active');
+                    }
+                }
+            }, {passive: false});
+
+            const releaseTouch = e => {
+                e.preventDefault();
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === activeTouchId) {
+                        activeTouchId = null;
+                        keys[keyCode] = false;
+                        el.classList.remove('active');
+                    }
+                }
+            };
+
+            el.addEventListener('touchend', releaseTouch, {passive: false});
+            el.addEventListener('touchcancel', releaseTouch, {passive: false});
+            el.addEventListener('mousedown', () => { keys[keyCode] = true; el.classList.add('active'); });
+            el.addEventListener('mouseup', () => { keys[keyCode] = false; el.classList.remove('active'); });
+            el.addEventListener('mouseleave', () => { keys[keyCode] = false; el.classList.remove('active'); });
         }
 
-        // Bind Kontrol Kiri (Api) -> Panah Keyboard
-        bindTouch('f-up', 'ArrowUp'); bindTouch('f-left', 'ArrowLeft'); bindTouch('f-right', 'ArrowRight');
-        // Bind Kontrol Kanan (Air) -> Tombol W, A, D
-        bindTouch('w-up', 'KeyW'); bindTouch('w-left', 'KeyA'); bindTouch('w-right', 'KeyD');
+        setupTouchButton('f-left', 'ArrowLeft');
+        setupTouchButton('f-right', 'ArrowRight');
+        setupTouchButton('f-up', 'ArrowUp');
+        setupTouchButton('w-left', 'KeyA');
+        setupTouchButton('w-right', 'KeyD');
+        setupTouchButton('w-up', 'KeyW');
 
-        // Struktur Level 1 - 10
-        const levelMaps = [
-            // Level 1
-            {
-                platforms: [{x:0,y:460,w:800,h:40}, {x:0,y:0,w:20,h:500}, {x:780,y:0,w:20,h:500}, {x:100,y:350,w:600,h:20}, {x:200,y:230,w:400,h:20}],
-                hazards: [{x:300,y:445,w:90,h:15,type:'lava'}, {x:420,y:445,w:90,h:15,type:'water'}, {x:350,y:335,w:80,h:15,type:'slime'}],
-                buttons: [{x:250,y:342,w:30,h:8,pressed:false,targetDoor:0}],
-                doors: [{x:550,y:250,w:15,h:100,openY:150,currentY:250}],
-                box: {x:150,y:310,w:30,h:30,vx:0,vy:0},
-                doorsFinish: {fire:{x:680,y:170,w:35,h:60}, water:{x:720,y:170,w:35,h:60}},
-                gems: [{x:200,y:310,type:'red'}, {x:600,y:190,type:'blue'}]
+        // Generator 10 Level dengan Tembok Bingkai Penuh & Rintangan Lengkap
+        function generateLevels() {
+            let levels = [];
+            for(let i = 1; i <= 10; i++) {
+                // Bingkai luar (tembok full tidak bisa ditembus)
+                let platforms = [
+                    {x: 0, y: 0, w: 800, h: 20},   // Atas
+                    {x: 0, y: 400, w: 800, h: 20},  // Bawah
+                    {x: 0, y: 0, w: 20, h: 420},    // Kiri
+                    {x: 780, y: 0, w: 20, h: 420},  // Kanan
+                    // Platform internal & sekat tembok labirin
+                    {x: 20, y: 310, w: 280, h: 20},
+                    {x: 380, y: 310, w: 400, h: 20},
+                    {x: 150, y: 210, w: 500, h: 20},
+                    {x: 250, y: 110, w: 300, h: 20},
+                    // Sekat vertikal tambahan agar tidak curang
+                    {x: 350, y: 210, w: 20, h: 100},
+                    {x: 550, y: 110, w: 20, h: 100}
+                ];
+
+                let hazards = [
+                    {x: 100, y: 385, w: 80, h: 15, type: i % 2 === 0 ? 'lava' : 'water'},
+                    {x: 600, y: 385, w: 80, h: 15, type: 'slime'},
+                    {x: 300, y: 195, w: 50, h: 15, type: i % 3 === 0 ? 'water' : 'lava'}
+                ];
+
+                let buttons = [
+                    {x: 50, y: 302, w: 35, h: 8, pressed: false, targetDoor: 0}
+                ];
+
+                let doors = [
+                    {x: 700, y: 210, w: 15, h: 100, openY: 120, currentY: 210}
+                ];
+
+                let box = {x: 200, y: 270, w: 30, h: 30, vx: 0, vy: 0};
+
+                let doorsFinish = {
+                    fire: {x: 660, y: 50, w: 35, h: 60},
+                    water: {x: 720, y: 50, w: 35, h: 60}
+                };
+
+                levels.push({ platforms, hazards, buttons, doors, box, doorsFinish });
             }
-        ];
-
-        // Buat 10 level secara prosedural agar lengkap 10 level
-        for(let i=2; i<=10; i++) {
-            levelMaps.push({
-                platforms: [{x:0,y:460,w:800,h:40}, {x:0,y:0,w:20,h:500}, {x:780,y:0,w:20,h:500}, {x:80,y:360,w:300,h:20}, {x:420,y:360,w:300,h:20}, {x:150,y:240,w:500,h:20}],
-                hazards: [{x:200,y:445,w:100,h:15,type: i%2===0?'lava':'water'}, {x:500,y:445,w:100,h:15,type:'slime'}],
-                buttons: [{x:100,y:352,w:30,h:8,pressed:false,targetDoor:0}],
-                doors: [{x:400,y:260,w:15,h:100,openY:160,currentY:260}],
-                box: {x:250,y:320,w:30,h:30,vx:0,vy:0},
-                doorsFinish: {fire:{x:650,y:180,w:35,h:60}, water:{x:700,y:180,w:35,h:60}},
-                gems: [{x:120,y:320,type:'red'}, {x:550,y:320,type:'blue'}]
-            });
+            return levels;
         }
 
+        const levelMaps = generateLevels();
         let map, fire, water;
 
         function loadLevel(lvlIdx) {
             map = JSON.parse(JSON.stringify(levelMaps[lvlIdx - 1]));
-            fire = {x: 50, y: 380, w: 26, h: 36, vx: 0, vy: 0, grounded: false, dead: false, anim: 0};
-            water = {x: 90, y: 380, w: 26, h: 36, vx: 0, vy: 0, grounded: false, dead: false, anim: 0};
+            fire = {x: 40, y: 350, w: 26, h: 36, vx: 0, vy: 0, grounded: false, dead: false};
+            water = {x: 80, y: 350, w: 26, h: 36, vx: 0, vy: 0, grounded: false, dead: false};
         }
 
         loadLevel(currentLevel);
 
-        // Web Audio API Sintetis
+        // Web Audio Sintetis Suara
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, type, duration) {
             try {
@@ -141,69 +235,92 @@
                 osc.type = type; osc.frequency.value = freq;
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start();
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
                 osc.stop(audioCtx.currentTime + duration);
             } catch(e){}
         }
 
-        // Loop Game Utama
+        // Fisika & Collision Sumbu Terpisah (Anti Tembus Tembok)
+        function moveAndCollide(entity, plats) {
+            // Sumbu X
+            entity.x += entity.vx;
+            plats.forEach(plat => {
+                if(entity.x < plat.x + plat.w && entity.x + entity.w > plat.x && entity.y < plat.y + plat.h && entity.y + entity.h > plat.y) {
+                    if(entity.vx > 0) entity.x = plat.x - entity.w;
+                    else if(entity.vx < 0) entity.x = plat.x + plat.w;
+                }
+            });
+
+            // Sumbu Y
+            entity.grounded = false;
+            entity.y += entity.vy;
+            plats.forEach(plat => {
+                if(entity.x < plat.x + plat.w && entity.x + entity.w > plat.x && entity.y < plat.y + plat.h && entity.y + entity.h > plat.y) {
+                    if(entity.vy > 0) { // Jatuh ke bawah
+                        entity.y = plat.y - entity.h;
+                        entity.vy = 0;
+                        entity.grounded = true;
+                    } else if(entity.vy < 0) { // Bentur kepala di atas
+                        entity.y = plat.y + plat.h;
+                        entity.vy = 0;
+                    }
+                }
+            });
+        }
+
         function update() {
             if(fire.dead || water.dead) return;
 
-            // Kontrol Fire (Api)
-            if(keys['ArrowLeft']) fire.vx = -3.5;
-            else if(keys['ArrowRight']) fire.vx = 3.5;
+            // Kontrol Fire (Panah)
+            if(keys['ArrowLeft']) fire.vx = -3.2;
+            else if(keys['ArrowRight']) fire.vx = 3.2;
             else fire.vx *= 0.7;
 
             if(keys['ArrowUp'] && fire.grounded) {
-                fire.vy = -9.5; fire.grounded = false; playSound(400, 'square', 0.1);
+                fire.vy = -9.2; fire.grounded = false; playSound(420, 'square', 0.1);
             }
 
-            // Kontrol Water (Air)
-            if(keys['KeyA']) water.vx = -3.5;
-            else if(keys['KeyD']) water.vx = 3.5;
+            // Kontrol Water (A, D, W)
+            if(keys['KeyA']) water.vx = -3.2;
+            else if(keys['KeyD']) water.vx = 3.2;
             else water.vx *= 0.7;
 
             if(keys['KeyW'] && water.grounded) {
-                water.vy = -9.5; water.grounded = false; playSound(500, 'triangle', 0.1);
+                water.vy = -9.2; water.grounded = false; playSound(520, 'triangle', 0.1);
             }
 
-            // Fisika Grafitasi
-            fire.vy += 0.45; water.vy += 0.45;
-            fire.x += fire.vx; fire.y += fire.vy;
-            water.x += water.vx; water.y += water.vy;
+            // Gravitasi
+            fire.vy += 0.42; water.vy += 0.42;
 
-            // Tabrakan Platform Karakter
-            [fire, water].forEach(p => {
-                p.grounded = false;
-                map.platforms.forEach(plat => {
-                    if(p.x < plat.x + plat.w && p.x + p.w > plat.x && p.y < plat.y + plat.h && p.y + p.h > plat.y) {
-                        if(p.vy > 0 && p.y + p.h - p.vy <= plat.y + 10) {
-                            p.y = plat.y - p.h; p.vy = 0; p.grounded = true;
-                        }
-                    }
-                });
+            // Kumpulan platform + pintu geser yang tertutup sebagai tembok solid
+            let activePlatforms = [...map.platforms];
+            map.doors.forEach(d => {
+                activePlatforms.push({x: d.x, y: d.currentY, w: d.w, h: d.h});
             });
 
-            // Mekanik Batu Dorong Co-Op (1 Player Berat, 2 Player Cepat)
+            moveAndCollide(fire, activePlatforms);
+            moveAndCollide(water, activePlatforms);
+
+            // Kotak Dorong Co-Op
             let box = map.box;
-            box.vy += 0.45; box.y += box.vy;
+            box.vy += 0.42;
+            box.y += box.vy;
             map.platforms.forEach(plat => {
                 if(box.x < plat.x + plat.w && box.x + box.w > plat.x && box.y < plat.y + plat.h && box.y + box.h > plat.y) {
                     if(box.vy > 0) { box.y = plat.y - box.h; box.vy = 0; }
                 }
             });
 
-            let firePush = (fire.x + fire.w > box.x && fire.x < box.x + box.w && Math.abs(fire.y - box.y) < 20);
-            let waterPush = (water.x + water.w > box.x && water.x < box.x + box.w && Math.abs(water.y - box.y) < 20);
+            let firePush = (fire.x + fire.w > box.x && fire.x < box.x + box.w && Math.abs(fire.y - box.y) < 25);
+            let waterPush = (water.x + water.w > box.x && water.x < box.x + box.w && Math.abs(water.y - box.y) < 25);
 
             if(firePush && waterPush) {
-                box.vx = (fire.vx + water.vx) * 0.9; // Dorong Cepat 2 Player
+                box.vx = (fire.vx + water.vx) * 0.85; // Cepat jika didorong berdua
             } else if(firePush) {
-                box.vx = fire.vx * 0.35; // Berat 1 Player
+                box.vx = fire.vx * 0.3; // Berat jika sendirian
             } else if(waterPush) {
-                box.vx = water.vx * 0.35;
+                box.vx = water.vx * 0.3;
             } else {
                 box.vx *= 0.6;
             }
@@ -215,51 +332,61 @@
                 btn.pressed = pressed;
                 let door = map.doors[btn.targetDoor];
                 if(door) {
-                    door.currentY += pressed ? (door.openY - door.currentY) * 0.1 : (door.y - door.currentY) * 0.1;
+                    let targetY = pressed ? door.openY : door.y;
+                    door.currentY += (targetY - door.currentY) * 0.15;
                 }
             });
 
-            // Rintangan Lava/Water/Slime
+            // Cek Rintangan (Lava / Air / Slime)
             map.hazards.forEach(h => {
                 [fire, water].forEach(p => {
-                    if(p.x < h.x + h.w && p.x + p.w > h.x && p.y + p.h > h.y + 5 && p.y < h.y + h.h) {
+                    if(p.x < h.x + h.w && p.x + p.w > h.x && p.y + p.h > h.y + 6 && p.y < h.y + h.h) {
                         if(h.type === 'slime') p.dead = true;
                         if(h.type === 'water' && p === fire) p.dead = true;
                         if(h.type === 'lava' && p === water) p.dead = true;
-                        if(p.dead) { playSound(150, 'sawtooth', 0.4); setTimeout(() => loadLevel(currentLevel), 800); }
+                        if(p.dead) {
+                            playSound(130, 'sawtooth', 0.4);
+                            setTimeout(() => loadLevel(currentLevel), 700);
+                        }
                     }
                 });
             });
 
-            // Cek Menang Level
+            // Cek Kemenangan Level
             let dF = map.doorsFinish.fire, dW = map.doorsFinish.water;
             let fireWin = fire.x > dF.x && fire.x + fire.w < dF.x + dF.w && fire.y > dF.y;
             let waterWin = water.x > dW.x && water.x + water.w < dW.x + dW.w && water.y > dW.y;
             if(fireWin && waterWin) {
                 playSound(800, 'sine', 0.3);
-                alert(`LEVEL ${currentLevel} SELESAI!`);
-                if(currentLevel < 10) { currentLevel++; loadLevel(currentLevel); }
-                else { alert("SELAMAT! ANDA TAMAT MEMAINKAN SELURUH 10 LEVEL!"); currentLevel = 1; loadLevel(1); }
+                alert(`SELAMAT! LEVEL ${currentLevel} SELESAI!`);
+                if(currentLevel < 10) {
+                    currentLevel++;
+                    loadLevel(currentLevel);
+                    document.getElementById('level-display').innerText = `LEVEL ${currentLevel}`;
+                } else {
+                    alert(" LUAR BIASA! ANDA TELAH MENYELESAIKAN SEMUA 10 LEVEL!");
+                    currentLevel = 1;
+                    loadLevel(1);
+                    document.getElementById('level-display').innerText = `LEVEL 1`;
+                }
             }
         }
 
-        // Render Grafis & Animasi Canvas
         function draw() {
-            ctx.clearRect(0,0,W,H);
+            ctx.clearRect(0, 0, W, H);
 
             // Dinding & Platform
-            ctx.fillStyle = '#2d3436';
+            ctx.fillStyle = '#222831';
             map.platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-            // Rintangan Beranimasi
+            // Rintangan (Lava, Air, Slime)
             let time = Date.now() * 0.005;
             map.hazards.forEach(h => {
                 ctx.fillStyle = h.type === 'lava' ? '#e74c3c' : (h.type === 'water' ? '#3498db' : '#2ecc71');
                 ctx.fillRect(h.x, h.y, h.w, h.h);
-                // Gelombang Animasi
                 ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                for(let x = h.x; x < h.x + h.w; x += 8) {
-                    ctx.fillRect(x, h.y + Math.sin(time + x) * 2, 4, 3);
+                for(let x = h.x; x < h.x + h.w; x += 10) {
+                    ctx.fillRect(x, h.y + Math.sin(time + x) * 2, 5, 3);
                 }
             });
 
@@ -270,43 +397,41 @@
             });
 
             // Pintu Geser
-            ctx.fillStyle = '#8e44ad';
+            ctx.fillStyle = '#9b59b6';
             map.doors.forEach(d => ctx.fillRect(d.x, d.currentY, d.w, d.h));
 
             // Batu Dorong
             ctx.fillStyle = '#7f8c8d';
             ctx.fillRect(map.box.x, map.box.y, map.box.w, map.box.h);
-            ctx.strokeStyle = '#95a5a6'; ctx.strokeRect(map.box.x, map.box.y, map.box.w, map.box.h);
+            ctx.strokeStyle = '#bdc3c7'; ctx.strokeRect(map.box.x, map.box.y, map.box.w, map.box.h);
 
-            // Pintu Finish (Merah & Biru)
+            // Pintu Keluar Finish
             ctx.fillStyle = '#c0392b'; ctx.fillRect(map.doorsFinish.fire.x, map.doorsFinish.fire.y, map.doorsFinish.fire.w, map.doorsFinish.fire.h);
             ctx.fillStyle = '#2980b9'; ctx.fillRect(map.doorsFinish.water.x, map.doorsFinish.water.y, map.doorsFinish.water.w, map.doorsFinish.water.h);
 
-            // Animasi Karakter Api (Pemain 1)
+            // Karakter Api (Pemain 1)
             if(!fire.dead) {
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(fire.x, fire.y, fire.w, fire.h);
-                // Nyala Api Animasi
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(fire.x + 4, fire.y - 6 + Math.sin(time*3)*3, 18, 8);
+                ctx.fillStyle = '#f1c40f'; // Efek kepala api
+                ctx.fillRect(fire.x + 4, fire.y - 6 + Math.sin(time*4)*3, 18, 8);
             }
 
-            // Animasi Karakter Air (Pemain 2)
+            // Karakter Air (Pemain 2)
             if(!water.dead) {
                 ctx.fillStyle = '#3498db';
                 ctx.fillRect(water.x, water.y, water.w, water.h);
-                // Tetesan Air Animasi
-                ctx.fillStyle = '#74b9ff';
-                ctx.fillRect(water.x + 6, water.y - 4 + Math.cos(time*3)*2, 14, 6);
+                ctx.fillStyle = '#74b9ff'; // Efek kepala air
+                ctx.fillRect(water.x + 6, water.y - 4 + Math.cos(time*4)*2, 14, 6);
             }
         }
 
-        function gameLoop() {
+        function loop() {
             update();
             draw();
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(loop);
         }
-        gameLoop();
+        loop();
     </script>
 </body>
 </html>
