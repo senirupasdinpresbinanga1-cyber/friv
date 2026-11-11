@@ -13,7 +13,6 @@
         #game-wrapper { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; background: #0f0f15; overflow: hidden; }
         canvas { background: #181824; display: block; box-shadow: 0 0 25px rgba(0,0,0,0.9); border-radius: 4px; }
 
-        /* Tombol Kontrol Kiri & Kanan Di Bawah */
         .controls-bottom { position: absolute; bottom: 8px; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; pointer-events: none; z-index: 10; }
         .pad-group { pointer-events: auto; display: flex; gap: 10px; align-items: center; }
         .ctrl-btn { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 6px 12px rgba(0,0,0,0.6); }
@@ -43,13 +42,11 @@
         <canvas id="canvas" width="800" height="440"></canvas>
         
         <div class="controls-bottom">
-            <!-- P1 Api (Tombol Kiri) -->
             <div class="pad-group fire-ctrl">
                 <div><div class="ctrl-btn" id="f-left">◀</div><div class="tag-player">KIRI</div></div>
                 <div><div class="ctrl-btn" id="f-right">▶</div><div class="tag-player">KANAN</div></div>
                 <div><div class="ctrl-btn" id="f-up">▲</div><div class="tag-player">JUMP</div></div>
             </div>
-            <!-- P2 Air (Tombol Kanan) -->
             <div class="pad-group water-ctrl">
                 <div><div class="ctrl-btn" id="w-up">▲</div><div class="tag-player">JUMP</div></div>
                 <div><div class="ctrl-btn" id="w-left">◀</div><div class="tag-player">KIRI</div></div>
@@ -108,51 +105,62 @@
         setupTouch('f-left', 'ArrowLeft'); setupTouch('f-right', 'ArrowRight'); setupTouch('f-up', 'ArrowUp');
         setupTouch('w-left', 'KeyA'); setupTouch('w-right', 'KeyD'); setupTouch('w-up', 'KeyW');
 
-        // Struktur Level 1 - 10: Jalur Tunggal Bersama (Satu Path Naik Zig-Zag)
+        // Generator Level dengan Tembok Terpotong (Cairan Menyatu) & Dual Tombol Pintu
         function getLevelData(lvl) {
             let platforms = [
-                {x: 0, y: 0, w: 800, h: 22},    // Tembok Atas
-                {x: 0, y: 418, w: 800, h: 22},   // Tembok Bawah
-                {x: 0, y: 0, w: 22, h: 440},     // Tembok Kiri
-                {x: 778, y: 0, w: 22, h: 440},   // Tembok Kanan
+                {x: 0, y: 0, w: 800, h: 22},    // Bingkai Atas
+                {x: 0, y: 418, w: 800, h: 22},   // Bingkai Bawah
+                {x: 0, y: 0, w: 22, h: 440},     // Bingkai Kiri
+                {x: 778, y: 0, w: 22, h: 440},   // Bingkai Kanan
 
-                // Lantai 1 (Paling Bawah)
-                {x: 22, y: 340, w: 640, h: 20},
-                // Lantai 2 (Tengah Bawah)
-                {x: 140, y: 260, w: 638, h: 20},
-                // Lantai 3 (Tengah Atas)
-                {x: 22, y: 180, w: 640, h: 20},
-                // Lantai 4 (Paling Atas)
-                {x: 140, y: 100, w: 638, h: 20}
+                // Lantai 1 (Terpotong di area cairan agar menyatu ke tembok)
+                {x: 22, y: 340, w: 180, h: 20},
+                {x: 270, y: 340, w: 180, h: 20},
+                {x: 520, y: 340, w: 258, h: 20},
+                {x: 200, y: 354, w: 70, h: 6},  // Lapisan dasar tipis bawah lava
+                {x: 450, y: 354, w: 70, h: 6},  // Lapisan dasar tipis bawah air
+
+                // Lantai 2 (Terpotong di tengah)
+                {x: 140, y: 250, w: 160, h: 20},
+                {x: 360, y: 250, w: 418, h: 20},
+                {x: 300, y: 264, w: 60, h: 6},  // Lapisan dasar slime
+
+                // Lantai 3 & 4 (Atas)
+                {x: 22, y: 160, w: 640, h: 20},
+                {x: 140, y: 75, w: 638, h: 20}
             ];
 
-            // Rintangan yang mudah dilompati jika berbeda elemen
+            // Cairan Menyatu Sama Tembok
             let hazards = [
-                {x: 220, y: 325, w: 65, h: 15, type: 'lava'},   // Api bisa lewat, Air harus lompat
-                {x: 480, y: 325, w: 65, h: 15, type: 'water'},  // Air bisa lewat, Api harus lompat
-                {x: 320, y: 245, w: 60, h: 15, type: 'slime'},  // Keduanya harus lompat
-                {x: 250, y: 165, w: 65, h: 15, type: lvl % 2 === 0 ? 'lava' : 'water'}
+                {x: 200, y: 340, w: 70, h: 14, type: 'lava'},
+                {x: 450, y: 340, w: 70, h: 14, type: 'water'},
+                {x: 300, y: 250, w: 60, h: 14, type: 'slime'}
             ];
 
-            // Tombol & Pintu Geser di Jalur Bersama
+            // DUAL TOMBOL UNTUK SETIAP PINTU (Sebelum & Sesudah Pintu)
             let buttons = [
-                {x: 580, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0}, // Tombol lantai 1 buka pintu lantai 2
-                {x: 80, y: 172, w: 34, h: 8, pressed: false, targetDoor: 1}    // Tombol lantai 3 buka pintu lantai 4
+                // Pintu 0 (Lantai 2): Tombol Sebelum (Lantai 1) & Tombol Sesudah (Lantai 2 setelah pintu)
+                {x: 560, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0}, 
+                {x: 720, y: 242, w: 34, h: 8, pressed: false, targetDoor: 0},
+
+                // Pintu 1 (Lantai 4): Tombol Sebelum (Lantai 3) & Tombol Sesudah (Lantai 4 setelah pintu)
+                {x: 100, y: 152, w: 34, h: 8, pressed: false, targetDoor: 1},
+                {x: 660, y: 67, w: 34, h: 8, pressed: false, targetDoor: 1}
             ];
 
             let doors = [
-                {x: 680, y: 260, w: 18, h: 80, openY: 180, currentY: 260},
-                {x: 620, y: 100, w: 18, h: 80, openY: 20, currentY: 100}
+                {x: 660, y: 250, w: 18, h: 90, openY: 170, currentY: 250}, // Pintu Lantai 2
+                {x: 600, y: 75, w: 18, h: 85, openY: 0, currentY: 75}      // Pintu Lantai 4
             ];
 
-            let box = {x: 180, y: 226, w: 32, h: 32, vx: 0, vy: 0};
+            let box = {x: 200, y: 210, w: 32, h: 32, vx: 0, vy: 0};
 
             let doorsFinish = {
-                fire: {x: 680, y: 40, w: 38, h: 60},
-                water: {x: 730, y: 40, w: 38, h: 60}
+                fire: {x: 680, y: 15, w: 38, h: 60},
+                water: {x: 730, y: 15, w: 38, h: 60}
             };
 
-            let spawn = { fire: {x: 45, y: 360}, water: {x: 85, y: 360} };
+            let spawn = { fire: {x: 45, y: 300}, water: {x: 85, y: 300} };
 
             return { platforms, hazards, buttons, doors, box, doorsFinish, spawn };
         }
@@ -167,7 +175,6 @@
 
         loadLevel(currentLevel);
 
-        // Web Audio Synthesizer
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, type, duration) {
             try {
@@ -182,9 +189,7 @@
             } catch(e){}
         }
 
-        // System Fisika Sumbu Terpisah (100% Anti Tembus Tembok)
         function moveEntity(ent, plats) {
-            // Gerakan Sumbu X
             ent.x += ent.vx;
             plats.forEach(p => {
                 if(ent.x < p.x + p.w && ent.x + ent.w > p.x && ent.y < p.y + p.h && ent.y + ent.h > p.y) {
@@ -193,7 +198,6 @@
                 }
             });
 
-            // Gerakan Sumbu Y
             ent.grounded = false;
             ent.y += ent.vy;
             plats.forEach(p => {
@@ -213,7 +217,6 @@
         function update() {
             if(fire.dead || water.dead) return;
 
-            // Input Fire (P1)
             if(keys['ArrowLeft']) fire.vx = -3.4;
             else if(keys['ArrowRight']) fire.vx = 3.4;
             else fire.vx *= 0.7;
@@ -222,7 +225,6 @@
                 fire.vy = -9.4; fire.grounded = false; playSound(440, 'square', 0.1);
             }
 
-            // Input Water (P2)
             if(keys['KeyA']) water.vx = -3.4;
             else if(keys['KeyD']) water.vx = 3.4;
             else water.vx *= 0.7;
@@ -233,7 +235,6 @@
 
             fire.vy += 0.44; water.vy += 0.44;
 
-            // Tembok Solid Platform + Pintu Geser
             let solidObstacles = [...map.platforms];
             map.doors.forEach(d => {
                 solidObstacles.push({x: d.x, y: d.currentY, w: d.w, h: d.h});
@@ -242,7 +243,6 @@
             moveEntity(fire, solidObstacles);
             moveEntity(water, solidObstacles);
 
-            // Batu Dorong 3D Co-Op
             let box = map.box;
             box.vy += 0.44; box.y += box.vy;
             map.platforms.forEach(p => {
@@ -254,15 +254,10 @@
             let firePush = (fire.x + fire.w > box.x && fire.x < box.x + box.w && Math.abs(fire.y - box.y) < 28);
             let waterPush = (water.x + water.w > box.x && water.x < box.x + box.w && Math.abs(water.y - box.y) < 28);
 
-            if(firePush && waterPush) {
-                box.vx = (fire.vx + water.vx) * 0.8;
-            } else if(firePush) {
-                box.vx = fire.vx * 0.35;
-            } else if(waterPush) {
-                box.vx = water.vx * 0.35;
-            } else {
-                box.vx *= 0.6;
-            }
+            if(firePush && waterPush) box.vx = (fire.vx + water.vx) * 0.8;
+            else if(firePush) box.vx = fire.vx * 0.35;
+            else if(waterPush) box.vx = water.vx * 0.35;
+            else box.vx *= 0.6;
 
             box.x += box.vx;
             map.platforms.forEach(p => {
@@ -272,21 +267,23 @@
                 }
             });
 
-            // Tombol Injak & Kecepatan Pintu Perhalus
-            map.buttons.forEach(btn => {
-                let pressed = [fire, water, box].some(o => o.x < btn.x + btn.w && o.x + o.w > btn.x && o.y + o.h >= btn.y - 2 && o.y < btn.y + btn.h);
-                btn.pressed = pressed;
-                let door = map.doors[btn.targetDoor];
-                if(door) {
-                    let targetY = pressed ? door.openY : door.y;
-                    door.currentY += (targetY - door.currentY) * 0.08;
-                }
+            // LOGIKA DUAL TOMBOL: Jika Tombol Sebelum ATAU Tombol Sesudah diinjak, pintu terbuka!
+            map.doors.forEach((door, doorIndex) => {
+                let isAnyButtonPressed = map.buttons.some(btn => {
+                    if(btn.targetDoor !== doorIndex) return false;
+                    let pressed = [fire, water, box].some(o => o.x < btn.x + btn.w && o.x + o.w > btn.x && o.y + o.h >= btn.y - 2 && o.y < btn.y + btn.h);
+                    btn.pressed = pressed;
+                    return pressed;
+                });
+
+                let targetY = isAnyButtonPressed ? door.openY : door.y;
+                door.currentY += (targetY - door.currentY) * 0.08;
             });
 
-            // Rintangan Cairan
+            // Rintangan Cairan Menyatu
             map.hazards.forEach(h => {
                 [fire, water].forEach(p => {
-                    if(p.x < h.x + h.w && p.x + p.w > h.x && p.y + p.h > h.y + 6 && p.y < h.y + h.h) {
+                    if(p.x < h.x + h.w && p.x + p.w > h.x && p.y + p.h > h.y + 4 && p.y < h.y + h.h) {
                         if(h.type === 'slime') p.dead = true;
                         if(h.type === 'water' && p === fire) p.dead = true;
                         if(h.type === 'lava' && p === water) p.dead = true;
@@ -318,33 +315,31 @@
             }
         }
 
-        // Render Grafis Pseudo-3D & Animasi Cairan Ombak
         function draw() {
             ctx.clearRect(0, 0, W, H);
 
             // Render Tembok Pseudo-3D
             map.platforms.forEach(p => {
                 ctx.fillStyle = '#2c3e50'; ctx.fillRect(p.x, p.y, p.w, p.h);
-                ctx.fillStyle = '#34495e'; ctx.fillRect(p.x, p.y, p.w, 4); // Sisi atas
-                ctx.fillStyle = '#1a252f'; ctx.fillRect(p.x + p.w - 4, p.y, 4, p.h); // Sisi kanan
-                ctx.fillRect(p.x, p.y + p.h - 4, p.w, 4);
+                ctx.fillStyle = '#34495e'; ctx.fillRect(p.x, p.y, p.w, 3);
+                ctx.fillStyle = '#1a252f'; ctx.fillRect(p.x + p.w - 3, p.y, 3, p.h);
             });
 
-            // Animasi Cairan Ombak Mengalir (Lava, Air, Slime)
+            // Animasi Cairan Menyatu Sama Tembok (Ombak Mengalir)
             let time = Date.now() * 0.006;
             map.hazards.forEach(h => {
                 let colorBase = h.type === 'lava' ? '#e74c3c' : (h.type === 'water' ? '#0984e3' : '#2ecc71');
                 let colorSurface = h.type === 'lava' ? '#ff7675' : (h.type === 'water' ? '#74b9ff' : '#55efc4');
 
                 ctx.fillStyle = colorBase;
-                ctx.fillRect(h.x, h.y + 4, h.w, h.h - 4);
+                ctx.fillRect(h.x, h.y + 3, h.w, h.h - 3);
 
                 ctx.fillStyle = colorSurface;
                 ctx.beginPath();
-                ctx.moveTo(h.x, h.y + 4);
+                ctx.moveTo(h.x, h.y + 3);
                 for (let x = 0; x <= h.w; x += 5) {
-                    let waveY = Math.sin(time*2 + (h.x + x)*0.1) * 3;
-                    ctx.lineTo(h.x + x, h.y + 3 + waveY);
+                    let waveY = Math.sin(time*2 + (h.x + x)*0.1) * 2.5;
+                    ctx.lineTo(h.x + x, h.y + 2 + waveY);
                 }
                 ctx.lineTo(h.x + h.w, h.y + h.h);
                 ctx.lineTo(h.x, h.y + h.h);
@@ -352,7 +347,7 @@
                 ctx.fill();
             });
 
-            // Tombol Injak 3D
+            // Tombol Injak 3D (Kuning/Oranye)
             map.buttons.forEach(b => {
                 ctx.fillStyle = b.pressed ? '#f1c40f' : '#e67e22';
                 let offset = b.pressed ? 4 : 0;
@@ -365,7 +360,7 @@
                 ctx.fillStyle = '#9b59b6'; ctx.fillRect(d.x + 2, d.currentY + 2, d.w - 4, d.h - 4);
             });
 
-            // Batu Dorong Balok 3D
+            // Batu Dorong 3D
             let b = map.box;
             ctx.fillStyle = '#7f8c8d'; ctx.fillRect(b.x, b.y, b.w, b.h);
             ctx.fillStyle = '#95a5a6'; ctx.fillRect(b.x, b.y, b.w - 4, 4);
@@ -375,7 +370,7 @@
             ctx.fillStyle = '#d63031'; ctx.fillRect(map.doorsFinish.fire.x, map.doorsFinish.fire.y, map.doorsFinish.fire.w, map.doorsFinish.fire.h);
             ctx.fillStyle = '#0984e3'; ctx.fillRect(map.doorsFinish.water.x, map.doorsFinish.water.y, map.doorsFinish.water.w, map.doorsFinish.water.h);
 
-            // Animasi Karakter Api (P1) + Kobaran Api Menyala
+            // Karakter Api (P1)
             if(!fire.dead) {
                 ctx.fillStyle = '#ff7675'; ctx.fillRect(fire.x, fire.y + 10, fire.w, fire.h - 10);
                 ctx.fillStyle = '#d63031';
@@ -385,7 +380,7 @@
                 ctx.fillRect(fire.x + 6, fire.y - flameH, 12, flameH);
             }
 
-            // Animasi Karakter Air (P2) + Tetesan Rambut Air
+            // Karakter Air (P2)
             if(!water.dead) {
                 ctx.fillStyle = '#74b9ff'; ctx.fillRect(water.x, water.y + 10, water.w, water.h - 10);
                 ctx.fillStyle = '#0984e3';
