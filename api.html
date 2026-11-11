@@ -105,62 +105,60 @@
         setupTouch('f-left', 'ArrowLeft'); setupTouch('f-right', 'ArrowRight'); setupTouch('f-up', 'ArrowUp');
         setupTouch('w-left', 'KeyA'); setupTouch('w-right', 'KeyD'); setupTouch('w-up', 'KeyW');
 
-        // Generator Level dengan Tembok Terpotong (Cairan Menyatu) & Dual Tombol Pintu
+        // Generator 10 Level Unik dengan Variasi Cairan (Lava, Air, Slime)
         function getLevelData(lvl) {
             let platforms = [
-                {x: 0, y: 0, w: 800, h: 22},    // Bingkai Atas
-                {x: 0, y: 418, w: 800, h: 22},   // Bingkai Bawah
-                {x: 0, y: 0, w: 22, h: 440},     // Bingkai Kiri
-                {x: 778, y: 0, w: 22, h: 440},   // Bingkai Kanan
-
-                // Lantai 1 (Terpotong di area cairan agar menyatu ke tembok)
-                {x: 22, y: 340, w: 180, h: 20},
-                {x: 270, y: 340, w: 180, h: 20},
-                {x: 520, y: 340, w: 258, h: 20},
-                {x: 200, y: 354, w: 70, h: 6},  // Lapisan dasar tipis bawah lava
-                {x: 450, y: 354, w: 70, h: 6},  // Lapisan dasar tipis bawah air
-
-                // Lantai 2 (Terpotong di tengah)
-                {x: 140, y: 250, w: 160, h: 20},
-                {x: 360, y: 250, w: 418, h: 20},
-                {x: 300, y: 264, w: 60, h: 6},  // Lapisan dasar slime
-
-                // Lantai 3 & 4 (Atas)
-                {x: 22, y: 160, w: 640, h: 20},
-                {x: 140, y: 75, w: 638, h: 20}
+                {x: 0, y: 0, w: 800, h: 22},    // Atas
+                {x: 0, y: 418, w: 800, h: 22},   // Bawah
+                {x: 0, y: 0, w: 22, h: 440},     // Kiri
+                {x: 778, y: 0, w: 22, h: 440}    // Kanan
             ];
+            let hazards = [];
+            let buttons = [];
+            let doors = [];
+            let box = {x: 200, y: 200, w: 32, h: 32, vx: 0, vy: 0};
+            let doorsFinish = { fire: {x: 700, y: 30, w: 38, h: 55}, water: {x: 742, y: 30, w: 38, h: 55} };
+            let spawn = { fire: {x: 45, y: 370}, water: {x: 85, y: 370} };
 
-            // Cairan Menyatu Sama Tembok
-            let hazards = [
-                {x: 200, y: 340, w: 70, h: 14, type: 'lava'},
-                {x: 450, y: 340, w: 70, h: 14, type: 'water'},
-                {x: 300, y: 250, w: 60, h: 14, type: 'slime'}
-            ];
-
-            // DUAL TOMBOL UNTUK SETIAP PINTU (Sebelum & Sesudah Pintu)
-            let buttons = [
-                // Pintu 0 (Lantai 2): Tombol Sebelum (Lantai 1) & Tombol Sesudah (Lantai 2 setelah pintu)
-                {x: 560, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0}, 
-                {x: 720, y: 242, w: 34, h: 8, pressed: false, targetDoor: 0},
-
-                // Pintu 1 (Lantai 4): Tombol Sebelum (Lantai 3) & Tombol Sesudah (Lantai 4 setelah pintu)
-                {x: 100, y: 152, w: 34, h: 8, pressed: false, targetDoor: 1},
-                {x: 660, y: 67, w: 34, h: 8, pressed: false, targetDoor: 1}
-            ];
-
-            let doors = [
-                {x: 660, y: 250, w: 18, h: 90, openY: 170, currentY: 250}, // Pintu Lantai 2
-                {x: 600, y: 75, w: 18, h: 85, openY: 0, currentY: 75}      // Pintu Lantai 4
-            ];
-
-            let box = {x: 200, y: 210, w: 32, h: 32, vx: 0, vy: 0};
-
-            let doorsFinish = {
-                fire: {x: 680, y: 15, w: 38, h: 60},
-                water: {x: 730, y: 15, w: 38, h: 60}
-            };
-
-            let spawn = { fire: {x: 45, y: 300}, water: {x: 85, y: 300} };
+            if (lvl === 1) {
+                platforms.push({x: 22, y: 340, w: 756, h: 20});
+                platforms.push({x: 350, y: 354, w: 80, h: 6});
+                hazards.push({x: 350, y: 340, w: 80, h: 14, type: 'lava'});
+                buttons.push({x: 200, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0});
+                buttons.push({x: 600, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0});
+                doors.push({x: 500, y: 240, w: 18, h: 100, openY: 150, currentY: 240});
+                platforms.push({x: 22, y: 240, w: 756, h: 20});
+                box = {x: 250, y: 300, w: 32, h: 32, vx: 0, vy: 0};
+            } else if (lvl === 2) {
+                platforms.push({x: 22, y: 340, w: 400, h: 20}, {x: 480, y: 340, w: 298, h: 20});
+                platforms.push({x: 400, y: 354, w: 80, h: 6});
+                hazards.push({x: 400, y: 340, w: 80, h: 14, type: 'water'});
+                platforms.push({x: 100, y: 230, w: 678, h: 20});
+                platforms.push({x: 250, y: 244, w: 70, h: 6});
+                hazards.push({x: 250, y: 230, w: 70, h: 14, type: 'slime'});
+                buttons.push({x: 120, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0});
+                buttons.push({x: 650, y: 222, w: 34, h: 8, pressed: false, targetDoor: 0});
+                doors.push({x: 580, y: 140, w: 18, h: 90, openY: 50, currentY: 140});
+                platforms.push({x: 22, y: 140, w: 756, h: 20});
+                box = {x: 200, y: 290, w: 32, h: 32, vx: 0, vy: 0};
+            } else {
+                // Level 3 s.d 10: Kompleksitas bertambah
+                let floors = 4;
+                let stepY = 380 / floors;
+                for(let f = 1; f < floors; f++) {
+                    let yPos = f * stepY;
+                    let gapX = (f * 130) % 500;
+                    platforms.push({x: 22, y: yPos, w: gapX, h: 20});
+                    platforms.push({x: gapX + 80, y: yPos, w: 756 - (gapX + 80), h: 20});
+                    platforms.push({x: gapX, y: yPos + 14, w: 80, h: 6});
+                    let typeH = (f % 3 === 0) ? 'slime' : (f % 2 === 0 ? 'water' : 'lava');
+                    hazards.push({x: gapX, y: yPos, w: 80, h: 14, type: typeH});
+                }
+                buttons.push({x: 50, y: 332, w: 34, h: 8, pressed: false, targetDoor: 0});
+                buttons.push({x: 700, y: 100, w: 34, h: 8, pressed: false, targetDoor: 0});
+                doors.push({x: 600, y: 200, w: 18, h: 100, openY: 100, currentY: 200});
+                box = {x: 200, y: 150, w: 32, h: 32, vx: 0, vy: 0};
+            }
 
             return { platforms, hazards, buttons, doors, box, doorsFinish, spawn };
         }
@@ -183,7 +181,7 @@
                 osc.type = type; osc.frequency.value = freq;
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.start();
-                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
                 osc.stop(audioCtx.currentTime + duration);
             } catch(e){}
@@ -235,9 +233,12 @@
 
             fire.vy += 0.44; water.vy += 0.44;
 
+            // HANYA masukkan pintu ke dalam rintangan solid JIKA pintu tertutup (currentY jauh dari openY)
             let solidObstacles = [...map.platforms];
             map.doors.forEach(d => {
-                solidObstacles.push({x: d.x, y: d.currentY, w: d.w, h: d.h});
+                if (Math.abs(d.currentY - d.openY) > 5) {
+                    solidObstacles.push({x: d.x, y: d.currentY, w: d.w, h: d.h});
+                }
             });
 
             moveEntity(fire, solidObstacles);
@@ -267,7 +268,7 @@
                 }
             });
 
-            // LOGIKA DUAL TOMBOL: Jika Tombol Sebelum ATAU Tombol Sesudah diinjak, pintu terbuka!
+            // Logika Dual Tombol Per Pintu
             map.doors.forEach((door, doorIndex) => {
                 let isAnyButtonPressed = map.buttons.some(btn => {
                     if(btn.targetDoor !== doorIndex) return false;
@@ -280,14 +281,19 @@
                 door.currentY += (targetY - door.currentY) * 0.08;
             });
 
-            // Rintangan Cairan Menyatu
+            // Aturan Kematian Sesuai Elemen:
+            // - Api menyentuh Lava (Aman), Api menyentuh Air/Slime (Mati)
+            // - Air menyentuh Air (Aman), Air menyentuh Lava/Slime (Mati)
             map.hazards.forEach(h => {
                 [fire, water].forEach(p => {
                     if(p.x < h.x + h.w && p.x + p.w > h.x && p.y + p.h > h.y + 4 && p.y < h.y + h.h) {
-                        if(h.type === 'slime') p.dead = true;
-                        if(h.type === 'water' && p === fire) p.dead = true;
-                        if(h.type === 'lava' && p === water) p.dead = true;
-                        if(p.dead) {
+                        let isDead = false;
+                        if(h.type === 'slime') isDead = true;
+                        if(h.type === 'water' && p === fire) isDead = true;
+                        if(h.type === 'lava' && p === water) isDead = true;
+
+                        if(isDead) {
+                            p.dead = true;
                             playSound(120, 'sawtooth', 0.4);
                             setTimeout(() => loadLevel(currentLevel), 600);
                         }
@@ -307,7 +313,7 @@
                     loadLevel(currentLevel);
                     document.getElementById('level-display').innerText = `LEVEL ${currentLevel}`;
                 } else {
-                    alert("SELAMAT! ANDA BERHASIL MENYELESAIKAN SELURUH 10 LEVEL!");
+                    alert("LUAR BIASA! ANDA MENYELESAIKAN SEMUA 10 LEVEL!");
                     currentLevel = 1;
                     loadLevel(1);
                     document.getElementById('level-display').innerText = `LEVEL 1`;
@@ -318,14 +324,12 @@
         function draw() {
             ctx.clearRect(0, 0, W, H);
 
-            // Render Tembok Pseudo-3D
             map.platforms.forEach(p => {
                 ctx.fillStyle = '#2c3e50'; ctx.fillRect(p.x, p.y, p.w, p.h);
                 ctx.fillStyle = '#34495e'; ctx.fillRect(p.x, p.y, p.w, 3);
                 ctx.fillStyle = '#1a252f'; ctx.fillRect(p.x + p.w - 3, p.y, 3, p.h);
             });
 
-            // Animasi Cairan Menyatu Sama Tembok (Ombak Mengalir)
             let time = Date.now() * 0.006;
             map.hazards.forEach(h => {
                 let colorBase = h.type === 'lava' ? '#e74c3c' : (h.type === 'water' ? '#0984e3' : '#2ecc71');
@@ -347,30 +351,28 @@
                 ctx.fill();
             });
 
-            // Tombol Injak 3D (Kuning/Oranye)
             map.buttons.forEach(b => {
                 ctx.fillStyle = b.pressed ? '#f1c40f' : '#e67e22';
                 let offset = b.pressed ? 4 : 0;
                 ctx.fillRect(b.x, b.y + offset, b.w, b.h - offset);
             });
 
-            // Pintu Geser 3D
+            // Render Pintu (hanya digambar jika belum terbuka penuh)
             map.doors.forEach(d => {
-                ctx.fillStyle = '#8e44ad'; ctx.fillRect(d.x, d.currentY, d.w, d.h);
-                ctx.fillStyle = '#9b59b6'; ctx.fillRect(d.x + 2, d.currentY + 2, d.w - 4, d.h - 4);
+                if (Math.abs(d.currentY - d.openY) > 2) {
+                    ctx.fillStyle = '#8e44ad'; ctx.fillRect(d.x, d.currentY, d.w, d.h);
+                    ctx.fillStyle = '#9b59b6'; ctx.fillRect(d.x + 2, d.currentY + 2, d.w - 4, d.h - 4);
+                }
             });
 
-            // Batu Dorong 3D
             let b = map.box;
             ctx.fillStyle = '#7f8c8d'; ctx.fillRect(b.x, b.y, b.w, b.h);
             ctx.fillStyle = '#95a5a6'; ctx.fillRect(b.x, b.y, b.w - 4, 4);
             ctx.fillStyle = '#34495e'; ctx.fillRect(b.x + b.w - 4, b.y, 4, b.h);
 
-            // Pintu Finish Merah & Biru
             ctx.fillStyle = '#d63031'; ctx.fillRect(map.doorsFinish.fire.x, map.doorsFinish.fire.y, map.doorsFinish.fire.w, map.doorsFinish.fire.h);
             ctx.fillStyle = '#0984e3'; ctx.fillRect(map.doorsFinish.water.x, map.doorsFinish.water.y, map.doorsFinish.water.w, map.doorsFinish.water.h);
 
-            // Karakter Api (P1)
             if(!fire.dead) {
                 ctx.fillStyle = '#ff7675'; ctx.fillRect(fire.x, fire.y + 10, fire.w, fire.h - 10);
                 ctx.fillStyle = '#d63031';
@@ -380,7 +382,6 @@
                 ctx.fillRect(fire.x + 6, fire.y - flameH, 12, flameH);
             }
 
-            // Karakter Air (P2)
             if(!water.dead) {
                 ctx.fillStyle = '#74b9ff'; ctx.fillRect(water.x, water.y + 10, water.w, water.h - 10);
                 ctx.fillStyle = '#0984e3';
